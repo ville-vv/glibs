@@ -1,0 +1,79 @@
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印0
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印0
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印0
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印1
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印1
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印1
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印2
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印2
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印2
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印3
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印3
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印3
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印4
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印4
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印4
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印5
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印5
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印5
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印6
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印6
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印6
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印7
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印7
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印7
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印8
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印8
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印8
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印9
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印9
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印9
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印10
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印10
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印10
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印11
+2017-11-07 10:49:04.563 ERRO main.go:19 main vil_s message:测试日志打印11
+2017-11-07 10:49:04.563 WARN main.go:21 main vil_s message:测试日志打印11
+2017-11-07 10:49:04.563 INFO main.go:18 main vil_s message:测试日志打印12
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印12
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印12
+2017-11-07 10:49:04.564 INFO main.go:18 main vil_s message:测试日志打印13
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印13
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印13
+2017-11-07 10:49:04.564 INFO main.go:18 main vil_s message:测试日志打印14
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印14
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印14
+2017-11-07 10:49:04.564 INFO main.go:18 main vil_s message:测试日志打印15
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印15
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印15
+2017-11-07 10:49:04.564 INFO main.go:18 main vil_s message:测试日志打印16
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印16
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印16
+2017-11-07 10:49:04.564 INFO main.go:18 main vil_s message:测试日志打印17
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印17
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印17
+2017-11-07 10:49:04.564 INFO main.go:18 main vil_s message:测试日志打印18
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印18
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印18
+2017-11-07 10:49:04.564 INFO main.go:18 main vil_s message:测试日志打印19
+2017-11-07 10:49:04.564 ERRO main.go:19 main vil_s message:测试日志打印19
+2017-11-07 10:49:04.564 WARN main.go:21 main vil_s message:测试日志打印19
+2017-11-07 14:10:28.026 ERRO user_controllers.go:31 func1 vil_s message:response faild code=5000 errmsg=%!(EXTRA string=Error 1054: Unknown column 'UserID' in 'field list')
+2017-11-07 14:27:50.337 ERRO user_controllers.go:31 func1 vil_s message:response faild code=5000 errmsg=%!(EXTRA string=Error 1054: Unknown column 'userID' in 'where clause')
+2017-11-07 14:28:08.358 ERRO user_controllers.go:31 func1 vil_s message:response faild code=5000 errmsg=%!(EXTRA string=Error 1054: Unknown column 'userID' in 'where clause')
+2017-11-07 14:28:27.915 ERRO user_controllers.go:31 func1 vil_s message:response faild code=5000 errmsg=%!(EXTRA string=sql: expected 3 destination arguments in Scan, not 1)
+2017-11-07 14:34:28.281 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-07 14:36:50.225 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-07 14:40:09.486 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-07 17:55:38.477 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-07 17:59:39.900 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-07 18:03:50.516 INFO user_login.go:70 login vil_s message:sign=4c0e08d2a784af1d12377d8031140a58
+2017-11-07 18:03:50.516 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-07 18:04:04.903 INFO user_login.go:70 login vil_s message:sign=4c0e08d2a784af1d12377d8031140a58
+2017-11-07 18:04:04.903 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-27 14:57:13.541 INFO user_login.go:70 login vil_s message:sign=4c0e08d2a784af1d12377d8031140a58
+2017-11-27 14:57:13.541 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-27 15:03:01.747 INFO user_login.go:70 login vil_s message:sign=4c0e08d2a784af1d12377d8031140a58
+2017-11-27 15:03:01.747 INFO user_controllers.go:28 func1 vil_s message:response success success
+2017-11-27 15:03:03.692 INFO user_login.go:70 login vil_s message:sign=67eb5e2976e561ef4e78ac71d79968c8
+2017-11-27 15:03:03.692 INFO user_controllers.go:28 func1 vil_s message:response success success
