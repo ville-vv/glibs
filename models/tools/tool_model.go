@@ -14,11 +14,13 @@ var (
 
 const (
 	Cmd_CourrntTime int = iota
+	Cmd_GetWeChatOpenID
 )
 
 func init() {
 	mp_Model = make(map[int]IToolHandle)
 	mp_Model[Cmd_CourrntTime] = new(CourrntTime)
+	mp_Model[Cmd_GetWeChatOpenID] = new(GetWeChatOpenID)
 }
 
 func NewModel(model int) IToolHandle {
