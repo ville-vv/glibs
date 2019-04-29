@@ -1,9 +1,3 @@
-
-config.toml
-.idea/workspace.xml
-.idea/modules.xml
-.idea/vcs.xml
-.idea/vil_tools.iml
-.idea/vcs.xml
-.idea/vcs.xml
+*.toml*
+.idea/*
 *.xml
