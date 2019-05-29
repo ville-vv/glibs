@@ -26,6 +26,12 @@ func TestLogD(t *testing.T) {
 func TestDefaultLogger(t *testing.T) {
 	DefaultLogger()
 	LogD("13465")
+	LogD("1346sdfsddddddddddddddddddddd5")
+	LogD("sdfsdsdfsdafsdfsdfsdfsd")
+	LogD("sdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsdd")
+	LogD("sdfsdsdfsdafsdfsdsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddsdfsdsdfsdafsdfsdfsdfsddfsdfsd")
+	LogD("sdfsdsdfsdafsdfsdfsdfsd")
+	LogD("sdfsdsdfsdafsdfsdfsdfsd")
 
 }
 func TestSetLogger(t *testing.T) {

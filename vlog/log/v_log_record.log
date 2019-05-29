@@ -1,2 +1,0 @@
-2019/05/09 [36m09:05:12.75 TestDefaultLogger log_test.go:28 ▶ DEBU 001[0m 13465
-{"level":"debug","time":"2019-05-09T09:07:18.350+0800","msg":"=>","desc":"13465"}
