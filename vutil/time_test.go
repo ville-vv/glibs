@@ -1,4 +1,4 @@
-package util
+package vutil
 
 import (
 	"testing"
