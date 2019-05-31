@@ -11,13 +11,13 @@ type NormalSqlDrive struct {
 
 func NewNormalSqlDrive(cnf *MySqlCnf) (dri *NormalSqlDrive) {
 	mcnf := &MySqlCnf{
-		Version:      cnf.Version,
-		UserName:     cnf.UserName,
-		Address:      cnf.Address,
-		Password:     cnf.Password,
-		Default:      cnf.Default,
-		MaxIdleConns: cnf.MaxIdleConns,
-		MaxOpenConns: cnf.MaxOpenConns,
+		Version:  cnf.Version,
+		UserName: cnf.UserName,
+		Address:  cnf.Address,
+		Password: cnf.Password,
+		Default:  cnf.Default,
+		MaxIdles: cnf.MaxIdles,
+		MaxOpens: cnf.MaxOpens,
 	}
 	mcnf.Databases = append(mcnf.Databases, cnf.Databases[:]...)
 
@@ -31,7 +31,7 @@ func NewNormalSqlDrive(cnf *MySqlCnf) (dri *NormalSqlDrive) {
 	return
 }
 
-func (sel *NormalSqlDrive) Connector(user, passwd, addr, dbname, version string, maxIdle, maxOpen int) error {
+func (sel *NormalSqlDrive) Conn(user, passwd, addr, dbname, version string, maxIdle, maxOpen int) error {
 	cnStr := sel.SqlConnStr(version, user, passwd, addr, dbname)
 	tempDb, err := sql.Open("mysql", cnStr)
 	if err != nil {

@@ -6,12 +6,12 @@ const (
 )
 
 type MySqlCnf struct {
-	Version      string   `json:"version"`
-	UserName     string   `json:"user_name"`
-	Address      string   `json:"host"`
-	Password     string   `json:"password"`
-	Default      string   `json:"default"`
-	MaxIdleConns int      `json:"max_idle_conns"`
-	MaxOpenConns int      `json:"max_open_conns"`
-	Databases    []string `json:"databases"`
+	Version   string   `json:"version"`
+	UserName  string   `json:"user_name"`
+	Address   string   `json:"host"`
+	Password  string   `json:"password"`
+	Default   string   `json:"default"`
+	MaxIdles  int      `json:"max_idles"`
+	MaxOpens  int      `json:"max_opens"`
+	Databases []string `json:"databases"`
 }

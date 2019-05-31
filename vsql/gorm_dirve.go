@@ -14,13 +14,13 @@ func NewGormDb(conf *MySqlCnf) (dri *GormDb) {
 		panic("mysql config is nil")
 	}
 	mcnf := &MySqlCnf{
-		Version:      conf.Version,
-		UserName:     conf.UserName,
-		Address:      conf.Address,
-		Password:     conf.Password,
-		Default:      conf.Default,
-		MaxIdleConns: conf.MaxIdleConns,
-		MaxOpenConns: conf.MaxOpenConns,
+		Version:  conf.Version,
+		UserName: conf.UserName,
+		Address:  conf.Address,
+		Password: conf.Password,
+		Default:  conf.Default,
+		MaxIdles: conf.MaxIdles,
+		MaxOpens: conf.MaxOpens,
 	}
 	mcnf.Databases = append(mcnf.Databases, conf.Databases[:]...)
 
@@ -34,7 +34,7 @@ func NewGormDb(conf *MySqlCnf) (dri *GormDb) {
 	return
 }
 
-func (sel *GormDb) Connector(user, passwd, addr, dbname, version string, maxIdle, maxOpen int) error {
+func (sel *GormDb) Conn(user, passwd, addr, dbname, version string, maxIdle, maxOpen int) error {
 	cnStr := sel.SqlConnStr("8", user, passwd, addr, dbname)
 	tempDb, err := gorm.Open("mysql", cnStr)
 	if err != nil {

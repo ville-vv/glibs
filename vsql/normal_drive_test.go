@@ -4,14 +4,14 @@ import "testing"
 
 func TestSql_Connector(t *testing.T) {
 	sqlCnf := &MySqlCnf{
-		Version:      "5",
-		UserName:     "root",
-		Address:      "localhost:3306",
-		Password:     "Root123",
-		Default:      "",
-		MaxIdleConns: 100,
-		MaxOpenConns: 1000,
-		Databases:    []string{},
+		Version:   "5",
+		UserName:  "root",
+		Address:   "localhost:3306",
+		Password:  "Root123",
+		Default:   "",
+		MaxIdles:  100,
+		MaxOpens:  1000,
+		Databases: []string{},
 	}
 	norSql := NewNormalSqlDrive(sqlCnf)
 	err := norSql.Open()

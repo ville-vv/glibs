@@ -26,7 +26,6 @@ func TestNewZapLogger(t *testing.T) {
 func TestZapLogger_LogD(t *testing.T) {
 	type fields struct {
 		infoLog *zap.Logger
-		accLog  *zap.Logger
 		logCnf  *LogCnf
 	}
 	type args struct {
@@ -38,7 +37,7 @@ func TestZapLogger_LogD(t *testing.T) {
 		fields fields
 		args   args
 	}{
-		{name: "", args: args{format: "%s++++%s=====%s", args: []interface{}{"sdfsdfs", "eon", "4645"}}},
+		{name: "", args: args{format: "%s++++%s=====%s", args: []interface{}{"sdfsdfs", "eon", "4645"}}, fields: fields{logCnf: &LogCnf{OutPutFile: []string{"stdout"}}}},
 	}
 	for _, tt := range tests {
 		l := NewZapLogger(tt.fields.logCnf)

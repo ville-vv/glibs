@@ -7,7 +7,7 @@ import (
 )
 
 type SqlDriver interface {
-	Connector(user, passwd, addr, dbname, version string, maxIdle, maxOpen int) error
+	Conn(user, passwd, addr, dbname, version string, maxIdle, maxOpen int) error
 	BreakOff()
 }
 
@@ -19,12 +19,12 @@ type SqlDrive struct {
 
 func (sel *SqlDrive) Open() error {
 	// 连接默认数据库
-	if err := sel.Driver.Connector(sel.SqlCnf.UserName, sel.SqlCnf.Password, sel.SqlCnf.Address, sel.SqlCnf.Default, sel.SqlCnf.Version, sel.SqlCnf.MaxIdleConns, sel.SqlCnf.MaxOpenConns); err != nil {
+	if err := sel.Driver.Conn(sel.SqlCnf.UserName, sel.SqlCnf.Password, sel.SqlCnf.Address, sel.SqlCnf.Default, sel.SqlCnf.Version, sel.SqlCnf.MaxIdles, sel.SqlCnf.MaxOpens); err != nil {
 		return err
 	}
 	// 连接其他指定的数据库
 	for _, dbv := range sel.SqlCnf.Databases {
-		if err := sel.Driver.Connector(sel.SqlCnf.UserName, sel.SqlCnf.Password, sel.SqlCnf.Address, dbv, sel.SqlCnf.Version, sel.SqlCnf.MaxIdleConns, sel.SqlCnf.MaxOpenConns); err != nil {
+		if err := sel.Driver.Conn(sel.SqlCnf.UserName, sel.SqlCnf.Password, sel.SqlCnf.Address, dbv, sel.SqlCnf.Version, sel.SqlCnf.MaxIdles, sel.SqlCnf.MaxOpens); err != nil {
 			return err
 		}
 	}
