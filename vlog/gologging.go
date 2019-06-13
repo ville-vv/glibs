@@ -70,7 +70,6 @@ func (l *GoLogger) AddLogBackend() {
 	// 打开文件输出终端
 	var backend []logging.Backend
 	for _, v := range l.logCnf.OutPutFile {
-
 		switch v {
 		case "stdout":
 			backend = append(backend, l.getStdOutBackend())
@@ -78,7 +77,7 @@ func (l *GoLogger) AddLogBackend() {
 			backend = append(backend, l.getFileBackend(v))
 		}
 	}
-	logging.SetBackend(backend...)
+	l.log.SetBackend(logging.SetBackend(backend...))
 	return
 }
 
