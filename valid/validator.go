@@ -3,6 +3,6 @@ package valid
 
 // 校验器
 type Validator interface {
-	Generate() string
-	Verify(string) bool
+	Generate(map[string]interface{}) string
+	Verify(string) (map[string]interface{}, bool)
 }
