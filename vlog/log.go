@@ -35,14 +35,16 @@ type ILogger interface {
 }
 
 // 初始化默认日志模块
-func DefaultLogger() ILogger {
+func DefaultLogger(lf ...string) ILogger {
 	cnf := &LogCnf{
 		OutPutErrFile: []string{},
-		OutPutFile:    []string{"./log/v_log_record.log", "stdout"},
 		ProgramName:   ProgramName,
+		OutPutFile:    []string{"stdout"},
 		Level:         LogLevelDebug,
 	}
-
+	if len(lf) > 0 {
+		cnf.OutPutFile = append(cnf.OutPutFile, lf[0])
+	}
 	log = NewGoLogger(cnf)
 	return log
 }
