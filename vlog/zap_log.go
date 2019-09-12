@@ -71,6 +71,10 @@ func (l *ZapLogger) LogD(format string, args ...interface{}) {
 	l.infoLog.Debug("=>", zap.String("desc", str))
 }
 func (l *ZapLogger) LogE(format string, args ...interface{}) {
+	if len(args) == 1{
+		l.infoLog.Error("=>", zap.Any("desc", args[0]))
+		return
+	}
 	str := fmt.Sprintf(format, args...)
 	l.infoLog.Error("=>", zap.String("desc", str))
 }
@@ -80,6 +84,10 @@ func (l *ZapLogger) LogW(format string, args ...interface{}) {
 	l.infoLog.Warn("=>", zap.String("desc", str))
 }
 func (l *ZapLogger) LogI(format string, args ...interface{}) {
+	if len(args) == 1{
+		l.infoLog.Info("=>", zap.Any("desc", args[0]))
+		return
+	}
 	str := fmt.Sprintf(format, args...)
 	l.infoLog.Info("=>", zap.String("desc", str))
 }

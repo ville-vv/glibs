@@ -18,12 +18,7 @@ func TestSnowFlake_Generate(t *testing.T) {
 	// 测试脚本
 
 	// 生成节点实例
-	node, err := NewSnowFlake(1)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	node := NewSnowFlake(1)
 
 	ch := make(chan int64, 100000)
 	count := 100000
