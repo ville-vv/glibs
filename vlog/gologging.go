@@ -20,7 +20,7 @@ var (
 	// 日志输出格式
 	logFormat = []string{
 		`%{shortfunc} ▶ %{level:.4s} %{message}`,
-		`%{time:15:04:05.00} %{shortfunc} ▶ %{level:.4s} %{id:03x} %{message}`,
+		`%{color}%{time:15:04:05.00} %{shortfile} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
 		`%{color}%{time:15:04:05.00} %{shortfunc} %{shortfile} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
 	}
 
@@ -104,7 +104,7 @@ func (l *GoLogger) getStdOutBackend() logging.LeveledBackend {
 
 func (l *GoLogger) getLogBackend(out io.Writer, level int) logging.LeveledBackend {
 	backend := logging.NewLogBackend(out, "", 1)
-	format := logging.MustStringFormatter(logFormat[2])
+	format := logging.MustStringFormatter(logFormat[1])
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	backendLeveled := logging.AddModuleLevel(backendFormatter)
 	backendLeveled.SetLevel(logging.Level(level), "")

@@ -65,3 +65,17 @@ func LogI(format string, args ...interface{}) {
 func LogW(format string, args ...interface{}) {
 	log.LogW(format, args...)
 }
+
+
+func DEBUG(format string, args ...interface{}) {
+	log.LogD(format, args...)
+}
+func ERROR(format string, args ...interface{}) {
+	log.LogE(format, args...)
+}
+func INFO(format string, args ...interface{}) {
+	log.LogI(format, args...)
+}
+func WARN(format string, args ...interface{}) {
+	log.LogW(format, args...)
+}

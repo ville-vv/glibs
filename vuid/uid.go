@@ -14,7 +14,7 @@ func newGenerator() UUid{
 	return NewSnowFlake()
 }
 
-// 获取 Uuid
+// 获取 int64 Uuid
 func GenUUid() (id int64) {
 	// 随机生成一个 workID 生成一个 uuid
 	return genWithId(1)
