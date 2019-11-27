@@ -2,7 +2,6 @@ package vutil
 
 import (
 	"log"
-	"os"
 	"reflect"
 	"strings"
 )
@@ -47,13 +46,4 @@ func GetTagName(structName interface{}) []string {
 		result = append(result, tagName)
 	}
 	return result
-}
-
-// PathExists 检查文件路径是否存在
-func PathExists(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil && os.IsNotExist(err) {
-		return false
-	}
-	return true
 }
