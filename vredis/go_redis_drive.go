@@ -11,9 +11,17 @@ type GoRedisDrive struct {
 }
 
 func NewGoRedisDrive(cnf *RedisCnf) *GoRedisDrive {
-	return &GoRedisDrive{
+	rds := &GoRedisDrive{
 		rcnf: cnf,
 	}
+	if err := rds.Conn(); err != nil {
+		panic(err)
+	}
+	return rds
+}
+
+func (sel *GoRedisDrive) GetRedis() *redis.Client {
+	return sel.client
 }
 
 func (sel *GoRedisDrive) Conn() error {
