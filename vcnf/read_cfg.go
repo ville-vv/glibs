@@ -5,11 +5,11 @@ import (
 	"errors"
 	"github.com/BurntSushi/toml"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/vilsongwei/vilgo/vfile"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
-	"vilgo/vfile"
 )
 
 // Reader
