@@ -8,7 +8,7 @@ import (
 	"context"
 	"sync/atomic"
 	"time"
-	"vilgo/vqueue"
+	"github.com/vilsongwei/vilgo/vqueue"
 )
 
 type TaskFunc func(params interface{}) error
