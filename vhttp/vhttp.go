@@ -12,9 +12,3 @@ var (
 		},
 	}
 )
-
-type Http interface {
-}
-
-type Https interface {
-}
