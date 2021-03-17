@@ -4,7 +4,7 @@ package valid
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"vilgo/vlog"
+	"github.com/ville-vv/vilgo/vlog"
 )
 
 type JwtToken struct {
