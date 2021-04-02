@@ -2,50 +2,85 @@
 package valid
 
 import (
-	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ville-vv/vilgo/vlog"
+	"time"
 )
 
-type JwtToken struct {
-	EncryptKey []byte
-	DecryptKey []byte
+type CustomClaims struct {
+	Stash map[string]string
+	jwt.StandardClaims
 }
 
-func NewJwtToken() *JwtToken {
-	return &JwtToken{}
-}
-
-func (sel *JwtToken) Generate(stash map[string]interface{}) string {
-	claim := jwt.MapClaims{
-		"exp":     "",
-		"nbf":     "",
-		"iat":     "",
-		"user_id": "888888888",
+func (s *CustomClaims) SetStash(stash map[string]string) {
+	if s.Stash == nil {
+		s.Stash = make(map[string]string)
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
-	str, err := token.SignedString(sel.EncryptKey)
+	for key, val := range stash {
+		s.Stash[key] = val
+	}
+}
+
+type JwtWithRsa struct {
+	PubKey []byte
+	PrvKey []byte
+}
+
+// 使用Rsa签名token
+func NewJwtWithRsa(pubKey, prvKey []byte) *JwtWithRsa {
+	t := &JwtWithRsa{PubKey: pubKey, PrvKey: prvKey}
+	copy(t.PrvKey, prvKey)
+	copy(t.PubKey, pubKey)
+	return t
+}
+
+// stash 可以存储用户自己的数据
+// exp 过期时间 分钟
+func (sel *JwtWithRsa) Generate(stash map[string]string, exp int64) (string, error) {
+	claim := &CustomClaims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Unix() + (exp * 60),
+		},
+	}
+	// 存储自己的数据
+	claim.SetStash(stash)
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("RS256"), claim)
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(sel.PrvKey)
 	if err != nil {
-		vlog.LogE("err:%s", err.Error())
-		return ""
+		return "", err
 	}
-	return str
+	return token.SignedString(privateKey)
 }
 
-func (sel *JwtToken) Verify(dt string) (stash map[string]interface{}, yes bool) {
-	token, err := jwt.ParseWithClaims(dt, jwt.MapClaims{}, func(tk *jwt.Token) (i interface{}, e error) {
-		if _, ok := tk.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("not SigningMethodHMAC")
+func (sel *JwtWithRsa) Verify(dt string) (stash map[string]string, err error) {
+	token, err := jwt.ParseWithClaims(dt, &CustomClaims{}, func(tk *jwt.Token) (i interface{}, e error) {
+		publicKey, err := jwt.ParseRSAPublicKeyFromPEM(sel.PubKey)
+		if err != nil {
+			return nil, err
 		}
-		return []byte(sel.DecryptKey), nil
+		return publicKey, nil
 	})
 	if err != nil {
-		vlog.LogE("err %s", err.Error())
-		return nil, false
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			switch {
+			case ve.Errors&jwt.ValidationErrorMalformed != 0:
+				// ValidationErrorMalformed是一个uint常量，表示token不可用
+				return nil, fmt.Errorf("token can not use")
+			case ve.Errors&jwt.ValidationErrorExpired != 0:
+				// ValidationErrorExpired表示Token过期
+				return nil, fmt.Errorf("token expire")
+			case ve.Errors&jwt.ValidationErrorNotValidYet != 0:
+				// ValidationErrorNotValidYet表示无效token
+				return nil, fmt.Errorf("invalid token")
+			default:
+				return nil, fmt.Errorf("token can not use")
+			}
+		}
+		return nil, err
 	}
-	claim, ok := token.Claims.(jwt.MapClaims)
+	claim, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
-		return nil, false
+		return nil, fmt.Errorf("invalid token")
 	}
-	return map[string]interface{}(claim), true
+	return claim.Stash, nil
 }
