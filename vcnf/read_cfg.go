@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/BurntSushi/toml"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/vilsongwei/vilgo/vfile"
+	"github.com/ville-vv/vilgo/vfile"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
