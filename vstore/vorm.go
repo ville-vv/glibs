@@ -17,15 +17,15 @@ var logConfig = logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Con
 	Colorful:      true,
 })
 
-func MakeDb(dbConfig *DbConf, replicas ...*DbConf) DB {
+func MakeDb(dbConfig DbConfig, replicas ...DbConfig) DB {
 	return NewGormDb(dbConfig, false, replicas...)
 }
 
-func MakeDBUtil(dbConfig *DbConf) DBUtil {
+func MakeDBUtil(dbConfig DbConfig) DBUtil {
 	return NewGormDb(dbConfig, true)
 }
 
-type DbConf struct {
+type dbConf struct {
 	Username     string
 	Password     string
 	Host         string
@@ -36,21 +36,82 @@ type DbConf struct {
 	DbCharset    string
 }
 
+func (sel *dbConf) GetUserName() string {
+	return sel.Username
+}
+
+func (sel *dbConf) GetPassword() string {
+	return sel.Password
+}
+
+func (sel *dbConf) GetHost() string {
+	return sel.Host
+}
+
+func (sel *dbConf) GetPort() string {
+	return sel.Port
+}
+
+func (sel *dbConf) GetDbName() string {
+	return sel.Port
+}
+
+func (sel *dbConf) GetMaxIdleConn() int {
+	return sel.MaxIdleConns
+}
+
+func (sel *dbConf) GetMaxOpenConn() int {
+	return sel.MaxOpenConns
+}
+
+func (sel *dbConf) GetCharset() string {
+	return sel.DbCharset
+}
+
+func (sel *dbConf) ToSet(db DbConfig) {
+	sel.Username = db.GetUserName()
+	sel.Password = db.GetPassword()
+	sel.Port = db.GetPort()
+	sel.Host = db.GetHost()
+	sel.DbName = db.GetDbName()
+	sel.MaxIdleConns = db.GetMaxIdleConn()
+	sel.MaxOpenConns = db.GetMaxOpenConn()
+	sel.DbCharset = db.GetCharset()
+	if sel.DbCharset == "" {
+		sel.DbCharset = "utf8"
+	}
+}
+
+type DbConfig interface {
+	GetUserName() string
+	GetPassword() string
+	GetHost() string
+	GetPort() string
+	GetDbName() string
+	GetMaxIdleConn() int
+	GetMaxOpenConn() int
+	GetCharset() string
+}
+
 type GormDb struct {
-	dbConfig *DbConf
-	replicas []*DbConf
+	dbConfig *dbConf
+	replicas []*dbConf
 	db       *gorm.DB
 	utilDB   *gorm.DB
 }
 
-func NewGormDb(dbConfig *DbConf, forUtil bool, replicas ...*DbConf) *GormDb {
-
-	if dbConfig.DbCharset == "" {
-		dbConfig.DbCharset = "utf8"
+func NewGormDb(dbC DbConfig, forUtil bool, repcs ...DbConfig) *GormDb {
+	mainDb := &dbConf{}
+	mainDb.ToSet(dbC)
+	replicas := make([]*dbConf, len(repcs))
+	for i, rep := range replicas {
+		rep.ToSet(repcs[i])
 	}
+	return newGormDb(mainDb, forUtil, replicas...)
+}
 
+func newGormDb(dbConfig *dbConf, forUtil bool, replicas ...*dbConf) *GormDb {
 	gm := &GormDb{dbConfig: dbConfig, replicas: replicas}
-
 	if forUtil {
 		gm.initCdDb()
 		return gm

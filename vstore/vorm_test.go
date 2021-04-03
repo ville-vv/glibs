@@ -5,7 +5,7 @@ import (
 )
 
 func TestGormDb_CreateDB(t *testing.T) {
-	db := MakeDBUtil(&DbConf{
+	db := MakeDBUtil(&dbConf{
 		Username: "root",
 		Password: "Root123.",
 		Host:     "127.0.0.1",
