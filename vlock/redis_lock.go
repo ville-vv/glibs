@@ -1,7 +1,6 @@
 package vlock
 
 import (
-	"errors"
 	"fmt"
 	"github.com/go-redis/redis"
 	"time"
@@ -65,7 +64,7 @@ func (r *RedisLock) Intercept(key string, timeout time.Duration) error {
 		return err
 	}
 	if !res {
-		return errors.New("too many times, please try again later")
+		return ErrToManyTimes
 	}
 	return nil
 }

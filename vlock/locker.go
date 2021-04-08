@@ -1,6 +1,13 @@
 package vlock
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrToManyTimes = errors.New("too many times, please try again later")
+)
 
 type Locker interface {
 	Lock(key string, timeout time.Duration) (string, error)
