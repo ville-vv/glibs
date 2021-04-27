@@ -39,11 +39,12 @@ func DefaultLogger(lf ...string) ILogger {
 	cnf := &LogCnf{
 		OutPutErrFile: []string{},
 		ProgramName:   ProgramName,
-		OutPutFile:    []string{"stdout"},
 		Level:         LogLevelDebug,
 	}
 	if len(lf) > 0 {
 		cnf.OutPutFile = append(cnf.OutPutFile, lf[0])
+	} else {
+		cnf.OutPutFile = []string{"stdout"}
 	}
 	log = NewGoLogger(cnf)
 	return log
@@ -65,7 +66,6 @@ func LogI(format string, args ...interface{}) {
 func LogW(format string, args ...interface{}) {
 	log.LogW(format, args...)
 }
-
 
 func DEBUG(format string, args ...interface{}) {
 	log.LogD(format, args...)
