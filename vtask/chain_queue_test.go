@@ -1,37 +1,10 @@
-package vqueue
+package vtask
 
 import (
 	"fmt"
 	"testing"
 	"time"
 )
-
-func TestQuery_Push(t *testing.T) {
-	q := New()
-	q.Push(30)
-	q.Push(50)
-	q.Push(90)
-	q.Push(100)
-	q.Push(5)
-
-	fmt.Println(q.Pop())
-	fmt.Println(q.Pop())
-	fmt.Println(q.Pop())
-	fmt.Println(q.Pop())
-	fmt.Println(q.Pop())
-
-	q.Push(30)
-	q.Push(50)
-	q.Push(90)
-	q.Push(100)
-	q.Push(5)
-
-	fmt.Println(q.Shift())
-	fmt.Println(q.Shift())
-	fmt.Println(q.Shift())
-	fmt.Println(q.Shift())
-	fmt.Println(q.Shift())
-}
 
 func TestQuery_Push2(t *testing.T) {
 	po := New()

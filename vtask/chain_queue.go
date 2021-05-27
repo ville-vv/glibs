@@ -1,4 +1,4 @@
-package vqueue
+package vtask
 
 import (
 	"errors"
@@ -10,13 +10,12 @@ func newNode(val interface{}) *node {
 }
 
 func New() Queue {
-	return newQueue()
+	return newChainQueue()
 }
 
 type Queue interface {
 	Pop() interface{}
 	Push(v interface{}) error
-	Shift() interface{}
 	Length() int64
 }
 
@@ -26,7 +25,7 @@ type node struct {
 	Next     *node
 }
 
-type queue struct {
+type ChainQueue struct {
 	lock     sync.Mutex
 	head     *node
 	rear     *node
@@ -34,7 +33,7 @@ type queue struct {
 	capacity int64
 }
 
-func newQueue(args ...interface{}) *queue {
+func newChainQueue(args ...interface{}) *ChainQueue {
 	max := int64(100000000)
 	if len(args) > 0 {
 		switch args[0].(type) {
@@ -44,11 +43,11 @@ func newQueue(args ...interface{}) *queue {
 			max = int64(args[0].(int))
 		}
 	}
-	return &queue{
+	return &ChainQueue{
 		capacity: max,
 	}
 }
-func (sel *queue) Pop() interface{} {
+func (sel *ChainQueue) Pop() interface{} {
 	sel.lock.Lock()
 	defer sel.lock.Unlock()
 	if sel.length <= 0 {
@@ -62,7 +61,7 @@ func (sel *queue) Pop() interface{} {
 	val.Next = nil
 	return val.value
 }
-func (sel *queue) Shift() interface{} {
+func (sel *ChainQueue) Shift() interface{} {
 	sel.lock.Lock()
 	defer sel.lock.Unlock()
 	if sel.length <= 0 {
@@ -81,14 +80,14 @@ func (sel *queue) Shift() interface{} {
 	sel.length--
 	return val.value
 }
-func (sel *queue) Push(n interface{}) error {
+func (sel *ChainQueue) Push(n interface{}) error {
 	if sel.length >= sel.capacity {
 		return errors.New("over max num for stack")
 	}
 	sel.push(&node{value: n})
 	return nil
 }
-func (sel *queue) push(top *node) {
+func (sel *ChainQueue) push(top *node) {
 	sel.lock.Lock()
 	defer sel.lock.Unlock()
 	if 0 == sel.length {
@@ -101,12 +100,12 @@ func (sel *queue) push(top *node) {
 	sel.length++
 	return
 }
-func (sel *queue) Length() int64 {
+func (sel *ChainQueue) Length() int64 {
 	return sel.length
 }
 
 var (
-	defaultQueue = newQueue()
+	defaultQueue = newChainQueue()
 )
 
 func Pop() interface{} {

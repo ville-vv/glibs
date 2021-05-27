@@ -6,9 +6,9 @@ package vtask
 
 import (
 	"context"
+	"github.com/vilsongwei/vilgo/vqueue"
 	"sync/atomic"
 	"time"
-	"github.com/vilsongwei/vilgo/vqueue"
 )
 
 type TaskFunc func(params interface{}) error
@@ -30,7 +30,7 @@ type Task struct {
 	ts      chan element  // 任务执行的单元
 	inl     time.Duration // 对执行错误的任务循环处理一次的定时
 	reLoops int           //
-	cache   vqueue.Queue  //
+	cache   Queue         //
 }
 
 func NewTask(num ...int) *Task {
@@ -83,7 +83,7 @@ func (t *Task) process(ctx context.Context) {
 func (t *Task) digestCache() {
 	reloops := make([]element, 0, t.cache.Length())
 	for t.cache.Length() > 0 {
-		nd := t.cache.Shift()
+		nd := t.cache.Pop()
 		if nd != nil {
 			switch elem := nd.(type) {
 			case element:
@@ -127,4 +127,18 @@ func (t *Task) Add(param interface{}, tf TaskFunc) {
 // CanStop return true is can stop task
 func (t *Task) CanStop() bool {
 	return atomic.LoadInt32(&t.runCnt) <= 0
+}
+
+// 重试机制
+// 执行循序
+// 分布式全局锁
+// 自动扩容工作池
+// 可持久存储
+type TaskV2 struct {
+	doQ    Queue
+	retryQ Queue
+	New    func() interface{}
+}
+
+func (t *TaskV2) Run() {
 }
