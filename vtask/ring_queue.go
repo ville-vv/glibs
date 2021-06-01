@@ -1,8 +1,12 @@
 package vtask
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type RingQueue struct {
+	lock   sync.Mutex
 	list   []interface{}
 	qLen   AtomicInt64
 	qCap   int64
@@ -12,7 +16,7 @@ type RingQueue struct {
 
 func NewRingQueue(qCap int64) *RingQueue {
 	return &RingQueue{
-		list:   make([]interface{}, qCap),
+		list:   make([]interface{}, qCap+1),
 		qCap:   qCap,
 		ptrIdx: AtomicInt64{},
 		popIdx: AtomicInt64{},
@@ -20,6 +24,8 @@ func NewRingQueue(qCap int64) *RingQueue {
 }
 
 func (r *RingQueue) Push(val interface{}) error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	if r.qLen.Load() > r.qCap {
 		return errors.New("")
 	}
@@ -34,6 +40,8 @@ func (r *RingQueue) Push(val interface{}) error {
 }
 
 func (r *RingQueue) Pop() interface{} {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	if r.qLen.Load() == 0 {
 		return nil
 	}
