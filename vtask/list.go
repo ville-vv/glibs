@@ -10,7 +10,7 @@ func newNode(val interface{}) *Node {
 }
 
 func New() Queue {
-	return newChainQueue()
+	return NewList()
 }
 
 type Queue interface {
@@ -29,7 +29,7 @@ func NewNode(value interface{}) *Node {
 	return &Node{Value: value}
 }
 
-type ChainQueue struct {
+type List struct {
 	lock     sync.Mutex
 	head     *Node
 	rear     *Node
@@ -37,7 +37,7 @@ type ChainQueue struct {
 	capacity int64
 }
 
-func newChainQueue(args ...interface{}) *ChainQueue {
+func NewList(args ...interface{}) *List {
 	max := int64(100000000)
 	if len(args) > 0 {
 		switch args[0].(type) {
@@ -47,11 +47,11 @@ func newChainQueue(args ...interface{}) *ChainQueue {
 			max = int64(args[0].(int))
 		}
 	}
-	return &ChainQueue{
+	return &List{
 		capacity: max,
 	}
 }
-func (sel *ChainQueue) Pop() interface{} {
+func (sel *List) Pop() interface{} {
 	sel.lock.Lock()
 	defer sel.lock.Unlock()
 	if sel.length <= 0 {
@@ -65,7 +65,7 @@ func (sel *ChainQueue) Pop() interface{} {
 	val.Next = nil
 	return val.Value
 }
-func (sel *ChainQueue) Shift() interface{} {
+func (sel *List) Shift() interface{} {
 	sel.lock.Lock()
 	defer sel.lock.Unlock()
 	if sel.length <= 0 {
@@ -84,14 +84,14 @@ func (sel *ChainQueue) Shift() interface{} {
 	sel.length--
 	return val.Value
 }
-func (sel *ChainQueue) Push(n interface{}) error {
+func (sel *List) Push(n interface{}) error {
 	if sel.length >= sel.capacity {
 		return errors.New("over max num for stack")
 	}
 	sel.push(&Node{Value: n})
 	return nil
 }
-func (sel *ChainQueue) push(top *Node) {
+func (sel *List) push(top *Node) {
 	sel.lock.Lock()
 	defer sel.lock.Unlock()
 	if 0 == sel.length {
@@ -104,12 +104,12 @@ func (sel *ChainQueue) push(top *Node) {
 	sel.length++
 	return
 }
-func (sel *ChainQueue) Length() int64 {
+func (sel *List) Length() int64 {
 	return sel.length
 }
 
 var (
-	defaultQueue = newChainQueue()
+	defaultQueue = NewList()
 )
 
 func Pop() interface{} {

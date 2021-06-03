@@ -1,7 +1,7 @@
 package vtask
 
 import (
-	"context"
+	"container/list"
 	"fmt"
 	"github.com/ville-vv/vilgo/vutil"
 	"testing"
@@ -9,69 +9,82 @@ import (
 )
 
 func TestDelayQueue_Loop(t *testing.T) {
-	dqu := DelayQueue{}
-	inc := AtomicInt64{}
+	dqu := NewDelayTask()
 
-	//for i := 0; i < 20; i++ {
-	//	go func(n int) {
-	//		dqu.Loop(context.Background(), func(val interface{}) {
-	//			if val == nil {
-	//				t.Error()
-	//				panic("")
-	//			}
-	//			fmt.Println("消费者:", n, val)
-	//		})
-	//	}(i)
-	//}
-	go func() {
-		dqu.Loop(context.Background(), func(i interface{}) {
-			if i == nil {
-				t.Error()
-				panic("")
-			}
-			fmt.Println("消费者1:", i)
-		})
-	}()
-
-	go func() {
-		for {
-			time.Sleep(time.Millisecond)
-			val := vutil.GenVCode(7)
-			fmt.Println("生产者1:", val)
-			dqu.Push(val, time.Millisecond)
-			inc.Inc()
-			if inc.Load() > 10888 {
-				return
-			}
-		}
-
-	}()
-
-	go func() {
-		for {
-			time.Sleep(time.Millisecond)
-			val := vutil.GenVCode(7)
-			fmt.Println("生产者1:", val)
-			dqu.Push(val, time.Millisecond)
-			inc.Inc()
-			if inc.Load() > 1088 {
-				return
-			}
-		}
-
-		//for i := 1; i < 8; i++ {
-		//	time.Sleep(time.Millisecond)
-		//	dqu.Push(i, time.Millisecond)
-		//}
-
-	}()
-	time.Sleep(time.Second)
-
-	for i := 1; i < 8; i++ {
-		time.Sleep(time.Millisecond)
-		dqu.Push(i, time.Millisecond)
+	taskF := func(p interface{}) {
+		//fmt.Println(p)
 	}
 
-	select {}
+	//time.Sleep(time.Second * 5)
 
+	for i := 0; i < 10; i++ {
+		go func(n int) {
+			for {
+				time.Sleep(time.Second * 1)
+				name := vutil.RandStringBytesMask(10)
+				_ = dqu.Push(name, []string{name}, taskF, time.Now().Add(time.Second*80))
+			}
+
+		}(i)
+	}
+
+	time.Sleep(time.Second * 5)
+
+	dqu.Close()
+	time.Sleep(time.Second)
+}
+
+func TestConsterList(t *testing.T) {
+	lt := list.New()
+	for i := 0; i < 10; i++ {
+		lt.PushFront(i)
+	}
+
+	for i := 0; i < 10; i++ {
+		fmt.Println(lt.Back())
+	}
+
+}
+
+func TestDelayQueue_Push(t *testing.T) {
+
+	addTimeCnt := AtomicInt64{}
+	timesCnt := 0
+
+	taskF := func(pList []interface{}) {
+		timesCnt += len(pList)
+		fmt.Println(addTimeCnt.Load(), timesCnt)
+	}
+	dqu := NewDelayQueue(taskF)
+	dqu.Run()
+	for i := 0; i < 100; i++ {
+		go func(n int) {
+			for {
+				time.Sleep(time.Second * 1)
+				name := vutil.RandStringBytesMask(16)
+				_ = dqu.Push(name, time.Now().Add(time.Second*1))
+				addTimeCnt.Inc()
+				//return
+				if addTimeCnt.Load() > 1000 {
+					return
+				}
+			}
+		}(i)
+	}
+	time.Sleep(time.Second * 20)
+	dqu.Close()
+}
+
+func BenchmarkDelayQueue_Push(b *testing.B) {
+	b.StopTimer()
+	taskF := func(pList []interface{}) {
+	}
+	dqu := NewDelayQueue(taskF)
+	dqu.Run()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		// BenchmarkDelayQueue_Push-4   	10580889	       110 ns/op
+		dqu.Push(vutil.RandStringBytesMask(16), time.Now().Add(time.Second*1))
+	}
+	dqu.Close()
 }
