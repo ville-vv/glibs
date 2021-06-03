@@ -1,7 +1,6 @@
 package vtask
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -27,7 +26,7 @@ func (r *RingQueue) Push(val interface{}) error {
 	r.lock.Lock()
 	if r.qLen > r.qCap {
 		r.lock.Unlock()
-		return errors.New("")
+		return ErrOverMaxSize
 	}
 	r.list[r.ptrIdx] = val
 	r.qLen++

@@ -378,16 +378,16 @@ func (sel *DelayQueue) Push(val interface{}, tm time.Time) error {
 
 func (sel *DelayQueue) push(name string, val interface{}, tm time.Time) error {
 	if !sel.started {
-		return nil
+		return ErrDelayNotStarted
 	}
 	timeNow := time.Now()
 	if tm.Before(timeNow) {
-		return errors.New("time must be after than now")
+		return ErrDelayTime
 	}
 	subSecond := int(tm.Unix() - timeNow.Unix())
 	idx := sel.slotIdx(subSecond)
 	if sel.slotLen[idx].Load() > sel.maxTaskSize {
-		return nil
+		return ErrOverMaxSize
 	}
 	sel.slotLen[idx].Inc()
 	sel.slots[idx].Store(name, &delayNode{
@@ -415,6 +415,10 @@ func NewDelayTaskV2() *DelayTaskV2 {
 func (sel *DelayTaskV2) Start() {
 	sel.delayQueue = NewDelayQueue(sel.exec)
 	sel.delayQueue.Run()
+}
+
+func (sel *DelayTaskV2) Close() {
+	sel.delayQueue.Close()
 }
 
 func (sel *DelayTaskV2) exec(list []interface{}) {

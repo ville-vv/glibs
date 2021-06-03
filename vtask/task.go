@@ -6,6 +6,8 @@ package vtask
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/vilsongwei/vilgo/vqueue"
 	"sync/atomic"
 	"time"
@@ -134,11 +136,115 @@ func (t *Task) CanStop() bool {
 // 分布式全局锁
 // 自动扩容工作池
 // 可持久存储
-type TaskV2 struct {
-	doQ    Queue
-	retryQ Queue
-	New    func() interface{}
+
+// 持久化存储
+type Persistent interface {
+	Load(interface{}) (int, error)
+	Store(interface{}) error
 }
 
-func (t *TaskV2) Run() {
+type TaskOption struct {
+	MaxQueueNum    int   // 最列表务数
+	RetryNum       int   // 重试次数 0 不重试
+	RetryInterval  int64 // 重试间隔时间，最小单位秒
+	PersistentFlag bool  // 是否持久化
+	ErrDealFunc    func(ctx interface{}, err error)
+}
+
+type retryTask struct {
+	LastErr  error
+	retryNum int
+	Data     interface{}
+}
+
+func (sel *retryTask) Dec() {
+	sel.retryNum--
+	if sel.retryNum < 0 {
+		sel.retryNum = 0
+	}
+}
+
+func (sel *retryTask) Warn() bool {
+	return sel.retryNum <= 0
+}
+
+type MiniTask struct {
+	option    *TaskOption
+	dataList  Queue
+	retryList DelayQueue // 延迟重试
+	pushCh    chan interface{}
+	retryCh   chan interface{}
+	New       func() interface{}
+	pst       Persistent
+}
+
+func (t *MiniTask) Start() {
+	t.retryList.Run()
+}
+
+func (t *MiniTask) Stop() {
+}
+
+func (t *MiniTask) loopPush() {
+	for val := range t.pushCh {
+		err := t.dataList.Push(val)
+		if err != nil {
+			// 出现错误先 放入重试
+			Err := t.Retry(val)
+			if Err != nil {
+				// 放入重试也错误了，就调用错误处理函数
+				t.option.ErrDealFunc(val, fmt.Errorf("%s,%s", err.Error(), Err.Error()))
+			}
+		}
+	}
+}
+
+func (t *MiniTask) loopRetry() {
+	var err error
+	for val := range t.retryCh {
+		nextTime := time.Now().Add(time.Second * time.Duration(t.option.RetryInterval))
+		switch retryDt := val.(type) {
+		case *retryTask:
+			if retryDt.Warn() {
+				t.option.ErrDealFunc(retryDt.Data, retryDt.LastErr)
+				break
+			}
+			retryDt.Dec()
+			err = t.retryList.Push(retryDt, nextTime)
+			if err != nil {
+				t.option.ErrDealFunc(retryDt.Data, err)
+			}
+		default:
+			err = t.retryList.Push(&retryTask{
+				retryNum: t.option.RetryNum,
+				Data:     val,
+			}, nextTime)
+			if err != nil {
+				t.option.ErrDealFunc(val, err)
+			}
+		}
+	}
+}
+
+func (t *MiniTask) Push(ctx interface{}) error {
+	select {
+	case t.pushCh <- ctx:
+	default:
+
+	}
+	return nil
+}
+
+func (t *MiniTask) Retry(ctx interface{}) error {
+	select {
+	case t.retryCh <- ctx:
+	default:
+		if t.option.PersistentFlag {
+			// 如果满了就持久化存储
+			return t.pst.Store(ctx)
+		}
+		// 如果么有开启持久处理，直接返回错误
+		return errors.New("retry list is full")
+	}
+	return nil
 }

@@ -5,9 +5,11 @@ import (
 	"sync"
 )
 
-func newNode(val interface{}) *Node {
-	return &Node{Value: val}
-}
+var (
+	ErrOverMaxSize     = errors.New("over max size")
+	ErrDelayTime       = errors.New("time must be after than now")
+	ErrDelayNotStarted = errors.New("not start loop")
+)
 
 func New() Queue {
 	return NewList()
@@ -38,7 +40,7 @@ type List struct {
 }
 
 func NewList(args ...interface{}) *List {
-	max := int64(100000000)
+	max := int64(10000000)
 	if len(args) > 0 {
 		switch args[0].(type) {
 		case int64:
@@ -85,15 +87,16 @@ func (sel *List) Shift() interface{} {
 	return val.Value
 }
 func (sel *List) Push(n interface{}) error {
-	if sel.length >= sel.capacity {
-		return errors.New("over max num for stack")
-	}
-	sel.push(&Node{Value: n})
-	return nil
+	return sel.push(NewNode(n))
 }
-func (sel *List) push(top *Node) {
+func (sel *List) push(top *Node) error {
 	sel.lock.Lock()
 	defer sel.lock.Unlock()
+
+	if sel.length >= sel.capacity {
+		return ErrOverMaxSize
+	}
+
 	if 0 == sel.length {
 		sel.head = top
 		sel.rear = sel.head
@@ -102,7 +105,7 @@ func (sel *List) push(top *Node) {
 	sel.head.Front = top
 	sel.head = top
 	sel.length++
-	return
+	return nil
 }
 func (sel *List) Length() int64 {
 	return sel.length
