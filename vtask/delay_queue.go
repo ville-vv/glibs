@@ -284,7 +284,7 @@ type DelayQueue struct {
 
 func NewDelayQueue(workFunc func([]interface{}), size ...int64) *DelayQueue {
 	if len(size) == 0 {
-		size = append(size, 1000)
+		size = append(size, 100000)
 	}
 	dt := &DelayQueue{
 		slots:       [60]*sync.Map{},
@@ -372,19 +372,20 @@ func (sel *DelayQueue) slotIdx(subSecond int) int {
 	return idx
 }
 
-func (sel *DelayQueue) Push(val interface{}, tm time.Time) error {
-	return sel.push(vutil.RandStringBytesMask(16), val, tm)
+// Push
+// val 要加入队列的值
+// tm 延迟时间最小单位为秒
+func (sel *DelayQueue) Push(val interface{}, tm int64) error {
+	return sel.push(vutil.RandStringBytesMask(16), val, int(tm))
 }
 
-func (sel *DelayQueue) push(name string, val interface{}, tm time.Time) error {
+func (sel *DelayQueue) push(name string, val interface{}, subSecond int) error {
 	if !sel.started {
 		return ErrDelayNotStarted
 	}
-	timeNow := time.Now()
-	if tm.Before(timeNow) {
-		return ErrDelayTime
+	if subSecond <= 0 {
+		subSecond = 1
 	}
-	subSecond := int(tm.Unix() - timeNow.Unix())
 	idx := sel.slotIdx(subSecond)
 	if sel.slotLen[idx].Load() > sel.maxTaskSize {
 		return ErrOverMaxSize
@@ -432,10 +433,10 @@ func (sel *DelayTaskV2) exec(list []interface{}) {
 	}
 }
 
-func (sel *DelayTaskV2) Push(name string, params interface{}, tm time.Duration, taskF delayTaskFunc) error {
+func (sel *DelayTaskV2) Push(name string, params interface{}, tm int64, taskF delayTaskFunc) error {
 	return sel.delayQueue.Push(&delayTaskV2{
 		Name:  name,
 		param: params,
 		exec:  taskF,
-	}, time.Now().Add(tm))
+	}, tm)
 }

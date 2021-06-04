@@ -14,6 +14,9 @@ type RingQueue struct {
 }
 
 func NewRingQueue(qCap int64) *RingQueue {
+	if qCap <= 0 {
+		qCap = 60000
+	}
 	return &RingQueue{
 		list:   make([]interface{}, qCap+1),
 		qCap:   qCap,

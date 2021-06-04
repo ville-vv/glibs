@@ -7,8 +7,8 @@ package vtask
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/vilsongwei/vilgo/vqueue"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -134,7 +134,6 @@ func (t *Task) CanStop() bool {
 // 重试机制
 // 执行循序
 // 分布式全局锁
-// 自动扩容工作池
 // 可持久存储
 
 // 持久化存储
@@ -144,107 +143,202 @@ type Persistent interface {
 }
 
 type TaskOption struct {
-	MaxQueueNum    int   // 最列表务数
-	RetryNum       int   // 重试次数 0 不重试
-	RetryInterval  int64 // 重试间隔时间，最小单位秒
-	PersistentFlag bool  // 是否持久化
-	ErrDealFunc    func(ctx interface{}, err error)
+	MaxQueueNum     int64 // 最列表务数
+	RetryFlag       bool  // 重试开关
+	PersistentFlag  bool  // 是否持久化
+	Persistent      Persistent
+	NewRetry        func(val interface{}) RetryElem
+	ErrEventHandler func(ctx interface{}, err error)
+	Exec            func(val interface{}) (retry bool)
 }
 
-type retryTask struct {
-	LastErr  error
-	retryNum int
-	Data     interface{}
-}
-
-func (sel *retryTask) Dec() {
-	sel.retryNum--
-	if sel.retryNum < 0 {
-		sel.retryNum = 0
-	}
-}
-
-func (sel *retryTask) Warn() bool {
-	return sel.retryNum <= 0
+//
+type RetryElem interface {
+	Can() error
+	Interval() int64
+	SetData(interface{})
+	GetData() interface{}
 }
 
 type MiniTask struct {
-	option    *TaskOption
-	dataList  Queue
-	retryList DelayQueue // 延迟重试
-	pushCh    chan interface{}
-	retryCh   chan interface{}
-	New       func() interface{}
-	pst       Persistent
+	dataList        Queue
+	retryList       *DelayQueue // 延迟重试
+	retryCh         chan interface{}
+	pst             Persistent
+	once            sync.Once
+	context         context.Context
+	RetryFlag       bool // 重试开关
+	PersistentFlag  bool // 是否持久化
+	newRetry        func(val interface{}) RetryElem
+	exec            func(val interface{}) (retry bool)
+	ErrEventHandler func(ctx interface{}, err error)
+}
+
+func NewMiniTask(option *TaskOption) *MiniTask {
+	mtsk := &MiniTask{
+		dataList:        NewRingQueue(option.MaxQueueNum),
+		retryCh:         make(chan interface{}, 2000),
+		pst:             option.Persistent,
+		once:            sync.Once{},
+		context:         context.Background(),
+		RetryFlag:       option.RetryFlag,
+		PersistentFlag:  option.PersistentFlag,
+		newRetry:        option.NewRetry,
+		exec:            option.Exec,
+		ErrEventHandler: option.ErrEventHandler,
+	}
+	mtsk.retryList = NewDelayQueue(mtsk.delayPush)
+	return mtsk
 }
 
 func (t *MiniTask) Start() {
-	t.retryList.Run()
+	t.once.Do(func() {
+		var wait sync.WaitGroup
+		t.retryList.Run()
+		wait.Add(2)
+		go func() {
+			wait.Done()
+			t.loopExec()
+		}()
+		go func() {
+			wait.Done()
+			t.loopRetry()
+		}()
+		wait.Wait()
+	})
 }
 
 func (t *MiniTask) Stop() {
+	t.retryList.Close()
+	t.waitStop()
 }
 
-func (t *MiniTask) loopPush() {
-	for val := range t.pushCh {
-		err := t.dataList.Push(val)
-		if err != nil {
-			// 出现错误先 放入重试
-			Err := t.Retry(val)
-			if Err != nil {
-				// 放入重试也错误了，就调用错误处理函数
-				t.option.ErrDealFunc(val, fmt.Errorf("%s,%s", err.Error(), Err.Error()))
+func (t *MiniTask) waitStop() {
+	t.clearRetryCh()
+	t.clearQueue()
+}
+
+func (t *MiniTask) retryPush(retryDt RetryElem) {
+	if err := retryDt.Can(); err != nil {
+		t.ErrEventHandler(retryDt.GetData(), err)
+		return
+	}
+	if err := t.retryList.Push(retryDt, retryDt.Interval()); err != nil {
+		t.ErrEventHandler(retryDt.GetData(), err)
+	}
+}
+
+func (t *MiniTask) loopRetry() {
+	for {
+		select {
+		case val, ok := <-t.retryCh:
+			if !ok {
+				return
+			}
+			switch retryDt := val.(type) {
+			case RetryElem:
+				t.retryPush(retryDt)
+			default:
+				t.retryPush(t.newRetry(val))
+			}
+		case <-t.context.Done():
+			return
+		}
+	}
+}
+
+func (t *MiniTask) loopExec() {
+	ticker := time.NewTicker(time.Millisecond * 100)
+	var err error
+	for {
+		select {
+		case <-ticker.C:
+			switch val := t.dataList.Pop().(type) {
+			case RetryElem:
+				if t.exec(val.GetData()) {
+					t.retryPush(val)
+				}
+			default:
+				if t.exec(val) {
+					if err = t.Retry(val); err != nil {
+						t.ErrEventHandler(val, err)
+					}
+				}
 			}
 		}
 	}
 }
 
-func (t *MiniTask) loopRetry() {
+func (t *MiniTask) clearRetryCh() {
+	close(t.retryCh)
 	var err error
+	var data interface{}
 	for val := range t.retryCh {
-		nextTime := time.Now().Add(time.Second * time.Duration(t.option.RetryInterval))
-		switch retryDt := val.(type) {
-		case *retryTask:
-			if retryDt.Warn() {
-				t.option.ErrDealFunc(retryDt.Data, retryDt.LastErr)
-				break
-			}
-			retryDt.Dec()
-			err = t.retryList.Push(retryDt, nextTime)
-			if err != nil {
-				t.option.ErrDealFunc(retryDt.Data, err)
-			}
+		switch retryVal := val.(type) {
+		case RetryElem:
+			data = retryVal.GetData()
 		default:
-			err = t.retryList.Push(&retryTask{
-				retryNum: t.option.RetryNum,
-				Data:     val,
-			}, nextTime)
-			if err != nil {
-				t.option.ErrDealFunc(val, err)
+			data = retryVal
+		}
+		if err = t.pst.Store(data); err != nil {
+			t.ErrEventHandler(val, err)
+		}
+	}
+}
+
+func (t *MiniTask) clearQueue() {
+	var err error
+	for t.dataList.Length() >= 0 {
+		data := t.dataList.Pop()
+		if data != nil {
+			// 清理数据的时候持久存储
+			if t.PersistentFlag {
+				if err = t.pst.Store(data); err != nil {
+					t.ErrEventHandler(data, err)
+				}
 			}
 		}
 	}
 }
 
 func (t *MiniTask) Push(ctx interface{}) error {
-	select {
-	case t.pushCh <- ctx:
-	default:
-
+	if err := t.dataList.Push(ctx); err != nil {
+		// 出现错误先放入重试
+		if err = t.Retry(ctx); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
+// 把数据放入到延迟队列中
 func (t *MiniTask) Retry(ctx interface{}) error {
+	if !t.RetryFlag {
+		return nil
+	}
 	select {
 	case t.retryCh <- ctx:
 	default:
-		if t.option.PersistentFlag {
+		if t.PersistentFlag {
 			// 如果满了就持久化存储
 			return t.pst.Store(ctx)
 		}
 		// 如果么有开启持久处理，直接返回错误
-		return errors.New("retry list is full")
+		return errors.New("task list is full")
 	}
 	return nil
+}
+
+func (t *MiniTask) delayPush(list []interface{}) {
+	// 如果延时队列到时间了就会自动发出要处理的数据
+	var err error
+	for _, val := range list {
+		task, ok := val.(RetryElem)
+		if !ok {
+			data := task.GetData()
+			if err = t.Push(data); err != nil {
+				t.ErrEventHandler(data, err)
+			}
+		}
+	}
 }

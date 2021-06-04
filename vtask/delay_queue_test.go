@@ -62,7 +62,7 @@ func TestDelayQueue_Push(t *testing.T) {
 			for {
 				time.Sleep(time.Second * 1)
 				name := vutil.RandStringBytesMask(16)
-				_ = dqu.Push(name, time.Now().Add(time.Second*1))
+				_ = dqu.Push(name, 1)
 				addTimeCnt.Inc()
 				//return
 				if addTimeCnt.Load() > 1000 {
@@ -84,7 +84,7 @@ func BenchmarkDelayQueue_Push(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		// BenchmarkDelayQueue_Push-4   	10580889	       110 ns/op
-		dqu.Push(vutil.RandStringBytesMask(16), time.Now().Add(time.Second*1))
+		dqu.Push(vutil.RandStringBytesMask(16), 1)
 	}
 	dqu.Close()
 }
