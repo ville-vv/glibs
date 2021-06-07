@@ -6,7 +6,6 @@ package vtask
 
 import (
 	"context"
-	"errors"
 	"github.com/vilsongwei/vilgo/vqueue"
 	"sync"
 	"sync/atomic"
@@ -138,14 +137,13 @@ func (t *Task) CanStop() bool {
 
 // 持久化存储
 type Persistent interface {
-	Load(interface{}) (int, error)
+	Load() ([]interface{}, error)
 	Store(interface{}) error
 }
 
 type TaskOption struct {
 	MaxQueueNum     int64 // 最列表务数
 	RetryFlag       bool  // 重试开关
-	PersistentFlag  bool  // 是否持久化
 	Persistent      Persistent
 	NewRetry        func(val interface{}) RetryElem
 	ErrEventHandler func(ctx interface{}, err error)
@@ -154,9 +152,8 @@ type TaskOption struct {
 
 //
 type RetryElem interface {
-	Can() error
+	Can() bool
 	Interval() int64
-	SetData(interface{})
 	GetData() interface{}
 }
 
@@ -164,11 +161,10 @@ type MiniTask struct {
 	dataList        Queue
 	retryList       *DelayQueue // 延迟重试
 	retryCh         chan interface{}
-	pst             Persistent
+	pst             Persistent // 是否持久化
 	once            sync.Once
-	context         context.Context
+	isStop          bool
 	RetryFlag       bool // 重试开关
-	PersistentFlag  bool // 是否持久化
 	newRetry        func(val interface{}) RetryElem
 	exec            func(val interface{}) (retry bool)
 	ErrEventHandler func(ctx interface{}, err error)
@@ -180,9 +176,7 @@ func NewMiniTask(option *TaskOption) *MiniTask {
 		retryCh:         make(chan interface{}, 2000),
 		pst:             option.Persistent,
 		once:            sync.Once{},
-		context:         context.Background(),
 		RetryFlag:       option.RetryFlag,
-		PersistentFlag:  option.PersistentFlag,
 		newRetry:        option.NewRetry,
 		exec:            option.Exec,
 		ErrEventHandler: option.ErrEventHandler,
@@ -205,10 +199,18 @@ func (t *MiniTask) Start() {
 			t.loopRetry()
 		}()
 		wait.Wait()
+		err := t.persistentLoad()
+		if err != nil {
+			panic(err)
+		}
 	})
 }
 
 func (t *MiniTask) Stop() {
+	if t.isStop {
+		return
+	}
+	t.isStop = true
 	t.retryList.Close()
 	t.waitStop()
 }
@@ -219,8 +221,7 @@ func (t *MiniTask) waitStop() {
 }
 
 func (t *MiniTask) retryPush(retryDt RetryElem) {
-	if err := retryDt.Can(); err != nil {
-		t.ErrEventHandler(retryDt.GetData(), err)
+	if !retryDt.Can() {
 		return
 	}
 	if err := t.retryList.Push(retryDt, retryDt.Interval()); err != nil {
@@ -241,30 +242,38 @@ func (t *MiniTask) loopRetry() {
 			default:
 				t.retryPush(t.newRetry(val))
 			}
-		case <-t.context.Done():
-			return
+		}
+	}
+}
+
+func (t *MiniTask) do(data interface{}) {
+	switch val := data.(type) {
+	case RetryElem:
+		if t.exec(val.GetData()) {
+			t.retryPush(val)
+		}
+	default:
+		if t.exec(val) {
+			if err := t.Retry(val); err != nil {
+				t.ErrEventHandler(val, err)
+			}
 		}
 	}
 }
 
 func (t *MiniTask) loopExec() {
 	ticker := time.NewTicker(time.Millisecond * 100)
-	var err error
 	for {
+		if t.isStop {
+			return
+		}
 		select {
 		case <-ticker.C:
-			switch val := t.dataList.Pop().(type) {
-			case RetryElem:
-				if t.exec(val.GetData()) {
-					t.retryPush(val)
-				}
-			default:
-				if t.exec(val) {
-					if err = t.Retry(val); err != nil {
-						t.ErrEventHandler(val, err)
-					}
-				}
+			data := t.dataList.Pop()
+			if data == nil {
+				break
 			}
+			t.do(data)
 		}
 	}
 }
@@ -288,11 +297,11 @@ func (t *MiniTask) clearRetryCh() {
 
 func (t *MiniTask) clearQueue() {
 	var err error
-	for t.dataList.Length() >= 0 {
+	for t.dataList.Length() > 0 {
 		data := t.dataList.Pop()
 		if data != nil {
 			// 清理数据的时候持久存储
-			if t.PersistentFlag {
+			if t.pst != nil {
 				if err = t.pst.Store(data); err != nil {
 					t.ErrEventHandler(data, err)
 				}
@@ -313,18 +322,16 @@ func (t *MiniTask) Push(ctx interface{}) error {
 
 // 把数据放入到延迟队列中
 func (t *MiniTask) Retry(ctx interface{}) error {
+	if t.isStop {
+		return t.persistentStore(ctx)
+	}
 	if !t.RetryFlag {
 		return nil
 	}
 	select {
 	case t.retryCh <- ctx:
 	default:
-		if t.PersistentFlag {
-			// 如果满了就持久化存储
-			return t.pst.Store(ctx)
-		}
-		// 如果么有开启持久处理，直接返回错误
-		return errors.New("task list is full")
+		return t.persistentStore(ctx)
 	}
 	return nil
 }
@@ -333,12 +340,33 @@ func (t *MiniTask) delayPush(list []interface{}) {
 	// 如果延时队列到时间了就会自动发出要处理的数据
 	var err error
 	for _, val := range list {
-		task, ok := val.(RetryElem)
-		if !ok {
-			data := task.GetData()
-			if err = t.Push(data); err != nil {
-				t.ErrEventHandler(data, err)
+		if err = t.Push(val); err != nil {
+			task, ok := val.(RetryElem)
+			if ok {
+				t.ErrEventHandler(task.GetData(), err)
+			} else {
+				t.ErrEventHandler(val, err)
 			}
 		}
 	}
+}
+
+func (t *MiniTask) persistentStore(ctx interface{}) error {
+	if t.pst != nil {
+		return t.pst.Store(ctx)
+	}
+	return nil
+}
+
+func (t *MiniTask) persistentLoad() error {
+	if t.pst != nil {
+		list, err := t.pst.Load()
+		if err != nil {
+			return err
+		}
+		for i := 0; i < len(list); i++ {
+			err = t.dataList.Push(list[i])
+		}
+	}
+	return nil
 }
