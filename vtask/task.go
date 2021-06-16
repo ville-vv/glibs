@@ -142,6 +142,7 @@ type Persistent interface {
 }
 
 type TaskOption struct {
+	TaskExeNum      int   // 任务执行现成数
 	MaxQueueNum     int64 // 最列表务数
 	RetryFlag       bool  // 重试开关
 	Persistent      Persistent
@@ -158,12 +159,14 @@ type RetryElem interface {
 }
 
 type MiniTask struct {
+	taskExeNum      int // 任务执行现成数
 	dataList        Queue
 	retryList       *DelayQueue // 延迟重试
 	retryCh         chan interface{}
 	pst             Persistent // 是否持久化
 	once            sync.Once
 	isStop          bool
+	stopCh          chan bool
 	RetryFlag       bool // 重试开关
 	newRetry        func(val interface{}) RetryElem
 	exec            func(val interface{}) (retry bool)
@@ -180,6 +183,11 @@ func NewMiniTask(option *TaskOption) *MiniTask {
 		newRetry:        option.NewRetry,
 		exec:            option.Exec,
 		ErrEventHandler: option.ErrEventHandler,
+		stopCh:          make(chan bool),
+	}
+	mtsk.taskExeNum = option.TaskExeNum
+	if mtsk.taskExeNum == 0 {
+		mtsk.taskExeNum = 5
 	}
 	mtsk.retryList = NewDelayQueue(mtsk.delayPush)
 	return mtsk
@@ -189,11 +197,19 @@ func (t *MiniTask) Start() {
 	t.once.Do(func() {
 		var wait sync.WaitGroup
 		t.retryList.Run()
-		wait.Add(2)
-		go func() {
-			wait.Done()
-			t.loopExec()
-		}()
+		wait.Add(t.taskExeNum)
+		for i := 0; i < t.taskExeNum; i++ {
+			go func() {
+				wait.Done()
+				t.loopExec(t.stopCh)
+			}()
+		}
+		wait.Wait()
+		//go func() {
+		//	wait.Done()
+		//	t.loopExec(t.stopCh)
+		//}()
+		wait.Add(1)
 		go func() {
 			wait.Done()
 			t.loopRetry()
@@ -261,7 +277,7 @@ func (t *MiniTask) do(data interface{}) {
 	}
 }
 
-func (t *MiniTask) loopExec() {
+func (t *MiniTask) loopExec(stopCh <-chan bool) {
 	ticker := time.NewTicker(time.Millisecond * 100)
 	for {
 		if t.isStop {
@@ -274,6 +290,8 @@ func (t *MiniTask) loopExec() {
 				break
 			}
 			t.do(data)
+		case <-stopCh:
+			return
 		}
 	}
 }
@@ -369,4 +387,14 @@ func (t *MiniTask) persistentLoad() error {
 		}
 	}
 	return nil
+}
+
+func (t *MiniTask) autoScaleExec() {
+	tm := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-tm.C:
+			// TODO
+		}
+	}
 }
