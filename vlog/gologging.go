@@ -19,9 +19,9 @@ const (
 var (
 	// 日志输出格式
 	logFormat = []string{
-		`%{shortfunc} > %{level:.4s} %{message}`,
-		`%{color}%{time:15:04:05.00} %{shortfile} > %{level:.4s} %{id:03x}%{color:reset} %{message}`,
-		`%{color}%{time:15:04:05.00} %{shortfunc} %{shortfile} > %{level:.4s} %{id:03x}%{color:reset} %{message}`,
+		`%{shortfunc} %{level:.4s} %{message}`,
+		`%{color}%{time:15:04:05.00} %{shortfile} %{level:.4s} %{id:03x}%{color:reset} %{message}`,
+		`%{color}%{time:15:04:05.00} %{shortfunc} %{shortfile} %{level:.4s} %{id:03x}%{color:reset} %{message}`,
 	}
 
 	// 日志级别与 string 类型映射
