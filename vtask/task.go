@@ -6,6 +6,7 @@ package vtask
 
 import (
 	"context"
+	"errors"
 	"github.com/vilsongwei/vilgo/vqueue"
 	"sync"
 	"sync/atomic"
@@ -238,6 +239,7 @@ func (t *MiniTask) waitStop() {
 
 func (t *MiniTask) retryPush(retryDt RetryElem) {
 	if !retryDt.Can() {
+		t.ErrEventHandler(retryDt.GetData(), errors.New("retry is out times"))
 		return
 	}
 	if err := t.retryList.Push(retryDt, retryDt.Interval()); err != nil {
