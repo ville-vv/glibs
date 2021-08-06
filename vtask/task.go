@@ -237,9 +237,13 @@ func (t *MiniTask) waitStop() {
 	t.clearQueue()
 }
 
+var (
+	RetryTimeout = errors.New("retry is out times")
+)
+
 func (t *MiniTask) retryPush(retryDt RetryElem) {
 	if !retryDt.Can() {
-		t.ErrEventHandler(retryDt.GetData(), errors.New("retry is out times"))
+		t.ErrEventHandler(retryDt.GetData(), RetryTimeout)
 		return
 	}
 	if err := t.retryList.Push(retryDt, retryDt.Interval()); err != nil {
