@@ -1,6 +1,6 @@
 package vstore
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 type DBUtil interface {
 	CreateDB()
