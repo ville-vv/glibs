@@ -7,7 +7,6 @@ package vtask
 import (
 	"context"
 	"errors"
-	"github.com/vilsongwei/vilgo/vqueue"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,7 +41,7 @@ func NewTask(num ...int) *Task {
 	}
 	return &Task{
 		ts:      make(chan element, n),
-		cache:   vqueue.New(),
+		cache:   New(),
 		inl:     time.Second * 5,
 		reLoops: 3,
 	}
