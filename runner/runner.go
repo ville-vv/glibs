@@ -1,65 +1,36 @@
 package runner
 
 import (
-	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
+	"path/filepath"
+	"runtime"
+	"strings"
 )
 
-type Runner interface {
-	Scheme() string
-	Init() error
-	Start() error
-	Exit(context.Context) error
-}
-
-func Run(svr Runner) {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	// init signal
-	if err := svr.Init(); err != nil {
-		fmt.Printf("init server failed: %s", err.Error())
-		return
-	}
-	Go(func() {
-		if err := svr.Start(); err != nil {
-			fmt.Printf("start server failed: %s", err.Error())
-			os.Exit(1)
+func PrintPanicStack(fn func(s string), extras ...interface{}) {
+	if err := recover(); err != nil {
+		var stack strings.Builder
+		if len(extras) > 0 {
+			stack.WriteString(fmt.Sprintf("recover: %v %v\n", err, extras))
+		} else {
+			stack.WriteString(fmt.Sprintf("recover: %v\n", err))
 		}
-	})
-
-	s := <-sig
-	switch s {
-	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-		if err := svr.Exit(ctx); err != nil {
-			fmt.Printf("start server failed: %s", err.Error())
-			return
-		}
-		time.Sleep(time.Second * 1)
-		fmt.Println("server exit")
-		return
-	default:
-		return
-	}
-}
-
-func Go(fn func()) {
-	var gw sync.WaitGroup
-	gw.Add(1)
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				fmt.Println(err)
+		// 打印调用栈信息
+		for i := 0; ; i++ {
+			funcName, file, line, ok := runtime.Caller(i)
+			if !ok {
+				break
 			}
-		}()
-		gw.Done()
-		fn()
+			stack.WriteString(fmt.Sprintf("%d: file: %s %d, %s\n", i, filepath.Base(file), line, runtime.FuncForPC(funcName).Name()))
+		}
+		fn(stack.String())
+	}
+}
+
+func GoSafe(fn func()) {
+	go func() {
+		defer PrintPanicStack(func(s string) {
+			fmt.Printf(s)
+		})
 	}()
-	gw.Wait()
 }

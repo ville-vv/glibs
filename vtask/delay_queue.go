@@ -2,8 +2,7 @@ package vtask
 
 import (
 	"errors"
-	"github.com/ville-vv/vilgo/vutil"
-
+	"github.com/ville-vv/vilgo/rand"
 	//"github.com/ville-vv/vilgo/vutil"
 	"sync"
 	"time"
@@ -279,7 +278,7 @@ func (sel *DelayQueue) slotIdx(subSecond int) int {
 // val 要加入队列的值
 // tm 延迟时间最小单位为秒
 func (sel *DelayQueue) Push(val interface{}, tm int64) error {
-	return sel.push(vutil.RandStringBytesMask(16), val, int(tm))
+	return sel.push(rand.RandLetterString(16), val, int(tm))
 }
 
 func (sel *DelayQueue) push(name string, val interface{}, subSecond int) error {

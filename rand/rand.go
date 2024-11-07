@@ -1,13 +1,14 @@
-package vutil
+package rand
 
 import (
 	"math/rand"
-	"time"
 	"unsafe"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const numberBytes = "0123456789"
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const letterNumberBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
 const (
 	letterIdxBits = 6                    // 6 bits to represent a letter index
 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
@@ -15,24 +16,19 @@ const (
 )
 
 const (
-	numberIdxBits = 6                    // 6 bits to represent a letter index
-	numberIdxMask = 1<<numberIdxBits - 1 // All 1-bits, as many as numberIdxBits
-	numberIdxMax  = 63 / numberIdxBits   // # of letter indices fitting in 63 bits
+	letterNumberLen = len(letterNumberBytes)
+	letterLen       = len(letterBytes)
+	numberLen       = len(numberBytes)
 )
 
-func init() {
-	rand.Seed(time.Now().Unix())
-}
-
-func RandStringBytesMask(n int) string {
+func GenLetterString(n int) string {
 	b := make([]byte, n)
-	ltLn := len(letterBytes)
 	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
 	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = rand.Int63(), letterIdxMax
 		}
-		if idx := int(cache & letterIdxMask); idx < ltLn {
+		if idx := int(cache & letterIdxMask); idx < letterLen {
 			b[i] = letterBytes[idx]
 			i--
 		}
@@ -42,16 +38,30 @@ func RandStringBytesMask(n int) string {
 	return string(b)
 }
 
-//生成验证码
-func GenVCode(n int) string {
+func GenLetterNumString(n int) string {
 	b := make([]byte, n)
-	ltLn := len(numberBytes)
-	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
 	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = rand.Int63(), letterIdxMax
 		}
-		if idx := int(cache & letterIdxMask); idx < ltLn {
+		if idx := int(cache & letterIdxMask); idx < letterNumberLen {
+			b[i] = letterNumberBytes[idx]
+			i--
+		}
+		cache >>= letterIdxBits
+		remain--
+	}
+	return string(b)
+}
+
+// GenNumber 生成验证码
+func GenNumber(n int) string {
+	b := make([]byte, n)
+	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = rand.Int63(), letterIdxMax
+		}
+		if idx := int(cache & letterIdxMask); idx < numberLen {
 			b[i] = numberBytes[idx]
 			i--
 		}

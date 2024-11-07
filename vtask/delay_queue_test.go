@@ -3,7 +3,7 @@ package vtask
 import (
 	"container/list"
 	"fmt"
-	"github.com/ville-vv/vilgo/vutil"
+	"github.com/ville-vv/vilgo/rand"
 	"testing"
 	"time"
 )
@@ -21,7 +21,7 @@ func TestDelayQueue_Loop(t *testing.T) {
 		go func(n int) {
 			for {
 				time.Sleep(time.Second * 1)
-				name := vutil.RandStringBytesMask(10)
+				name := rand.RandLetterString(10)
 				_ = dqu.Push(name, []string{name}, taskF, time.Now().Add(time.Second*80))
 			}
 
@@ -61,7 +61,7 @@ func TestDelayQueue_Push(t *testing.T) {
 		go func(n int) {
 			for {
 				time.Sleep(time.Second * 1)
-				name := vutil.RandStringBytesMask(16)
+				name := rand.RandLetterString(16)
 				_ = dqu.Push(name, 1)
 				addTimeCnt.Inc()
 				//return
@@ -84,7 +84,7 @@ func BenchmarkDelayQueue_Push(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		// BenchmarkDelayQueue_Push-4   	10580889	       110 ns/op
-		dqu.Push(vutil.RandStringBytesMask(16), 1)
+		dqu.Push(rand.RandLetterString(16), 1)
 	}
 	dqu.Close()
 }
