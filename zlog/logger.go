@@ -6,27 +6,27 @@ import (
 	"go.uber.org/zap"
 )
 
-// Logger 定义了所有的日志方法
+// LoggerInterface 定义了所有的日志方法
 type Logger interface {
 	Info(args ...interface{})
 	Infof(template string, args ...interface{})
-	Infow(msg string, keysAndValues ...interface{})
+	Infow(msg string, kvs ...interface{})
 	Infoln(args ...interface{})
 	Debug(args ...interface{})
 	Debugf(template string, args ...interface{})
-	Debugw(msg string, keysAndValues ...interface{})
+	Debugw(msg string, kvs ...interface{})
 	Debugln(args ...interface{})
 	Warn(args ...interface{})
 	Warnf(template string, args ...interface{})
-	Warnw(msg string, keysAndValues ...interface{})
+	Warnw(msg string, kvs ...interface{})
 	Warnln(args ...interface{})
 	Error(args ...interface{})
 	Errorf(template string, args ...interface{})
-	Errorw(msg string, keysAndValues ...interface{})
+	Errorw(msg string, kvs ...interface{})
 	Errorln(args ...interface{})
 }
 
-func extractTrace(ctx context.Context) (traceID, spanID string) {
+func ExtractTraceInfo(ctx context.Context) (traceID, spanID string) {
 	spanCtx := trace.SpanContextFromContext(ctx)
 	if spanCtx.HasTraceID() {
 		traceID = spanCtx.TraceID().String()
@@ -50,7 +50,7 @@ func WithContext(ctx context.Context) Logger {
 		return &loggerWithContext{ctx: ctx, sugar: _sugar}
 	}
 	wc := &loggerWithContext{ctx: ctx, sugar: _sugar}
-	wc.traceID, wc.spanID = extractTrace(ctx)
+	wc.traceID, wc.spanID = ExtractTraceInfo(ctx)
 	return wc
 }
 
@@ -59,7 +59,7 @@ func WithContextAndCallerSkip(ctx context.Context) Logger {
 		return &loggerWithContext{ctx: ctx, sugar: _sugar}
 	}
 	wc := &loggerWithContext{ctx: ctx, sugar: _sugar.WithOptions(zap.AddCallerSkip(1))}
-	wc.traceID, wc.spanID = extractTrace(ctx)
+	wc.traceID, wc.spanID = ExtractTraceInfo(ctx)
 	return wc
 }
 
@@ -68,12 +68,12 @@ func WithContextPointLogger(ctx context.Context, sugar *zap.SugaredLogger) Logge
 		return &loggerWithContext{ctx: ctx, sugar: sugar}
 	}
 	wc := &loggerWithContext{ctx: ctx, sugar: sugar}
-	wc.traceID, wc.spanID = extractTrace(ctx)
+	wc.traceID, wc.spanID = ExtractTraceInfo(ctx)
 	return wc
 }
 
 func (l *loggerWithContext) extractTraceInfo() (traceID, spanID string) {
-	return extractTrace(l.ctx)
+	return ExtractTraceInfo(l.ctx)
 }
 
 func (l *loggerWithContext) Info(args ...interface{}) {
@@ -134,7 +134,8 @@ func (l *loggerWithContext) Debugw(msg string, keysAndValues ...interface{}) {
 		l.sugar.Debugw(msg, keysAndValues...)
 		return
 	}
-	l.sugar.With("trace", l.traceID, "span", l.spanID).Debugw(msg, keysAndValues...)
+	keysAndValues = append(keysAndValues, zap.String("trace", l.traceID), zap.String("span", l.spanID))
+	l.sugar.Debugw(msg, keysAndValues...)
 }
 
 func (l *loggerWithContext) Debugln(args ...interface{}) {

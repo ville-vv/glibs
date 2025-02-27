@@ -194,17 +194,20 @@ func getWrite(fileName string, cfg *LogConfig) io.Writer {
 
 var _log *zap.Logger
 var _sugar *zap.SugaredLogger
+var _sugarNoSkip *zap.SugaredLogger
 var once sync.Once
 
 func init() {
 	_log = NewZLog(LogConfig{})
 	_sugar = _log.Sugar().WithOptions(zap.AddCallerSkip(1))
+	_sugarNoSkip = _log.Sugar()
 }
 
 func Init(cfg LogConfig) *zap.Logger {
 	once.Do(func() {
 		_log = NewZLog(cfg)
 		_sugar = _log.Sugar().WithOptions(zap.AddCallerSkip(1))
+		_sugarNoSkip = _log.Sugar()
 	})
 	return _log
 }
@@ -217,17 +220,21 @@ func InitConsole(cfg ...LogConfig) *zap.Logger {
 		}
 		_log = NewConsoleZLog(c)
 		_sugar = _log.Sugar().WithOptions(zap.AddCallerSkip(1))
-
+		_sugarNoSkip = _log.Sugar()
 	})
 	return _log
 }
 
-func GetLoggerCallSkip() Logger {
-	return _sugar.WithOptions(zap.AddCallerSkip(1))
+func GetLoggerCallSkip(skip int) Logger {
+	return _sugar.WithOptions(zap.AddCallerSkip(skip))
+}
+
+func GetLoggerWith(kvFields ...interface{}) Logger {
+	return _sugarNoSkip.With(kvFields...)
 }
 
 func GetLogger() Logger {
-	return _log.Sugar()
+	return _sugarNoSkip
 }
 
 func Info(args ...interface{}) {
@@ -242,8 +249,8 @@ func Infoln(args ...interface{}) {
 	_sugar.Infoln(args...)
 }
 
-func Infow(msg string, keysAndValues ...interface{}) {
-	_sugar.Infow(msg, keysAndValues...)
+func Infow(msg string, kvs ...interface{}) {
+	_sugar.Infow(msg, kvs...)
 }
 
 func Debug(args ...interface{}) {
@@ -253,12 +260,13 @@ func Debug(args ...interface{}) {
 func Debugf(template string, args ...interface{}) {
 	_sugar.Debugf(template, args...)
 }
+
 func Debugln(args ...interface{}) {
 	_sugar.Debugln(args...)
 }
 
-func Debugw(msg string, keysAndValues ...interface{}) {
-	_sugar.Debugw(msg, keysAndValues...)
+func Debugw(msg string, kvs ...interface{}) {
+	_sugar.Debugw(msg, kvs...)
 }
 
 func Warn(args ...interface{}) {
@@ -270,8 +278,8 @@ func Warnf(template string, args ...interface{}) {
 func Warnln(args ...interface{}) {
 	_sugar.Warnln(args...)
 }
-func Warnw(msg string, keysAndValues ...interface{}) {
-	_sugar.Warnw(msg, keysAndValues...)
+func Warnw(msg string, kvs ...interface{}) {
+	_sugar.Warnw(msg, kvs...)
 }
 func Error(args ...interface{}) {
 	_sugar.Error(args...)
@@ -282,71 +290,71 @@ func Errorf(template string, args ...interface{}) {
 func Errorln(args ...interface{}) {
 	_sugar.Errorln(args...)
 }
-func Errorw(msg string, keysAndValues ...interface{}) {
-	_sugar.Errorw(msg, keysAndValues...)
+func Errorw(msg string, kvs ...interface{}) {
+	_sugar.Errorw(msg, kvs...)
 }
 
 // InfoWithContext 带有 context 的日志方法
 func InfoWithContext(ctx context.Context, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.With("trace", traceID, "span", spanID).Info(args...)
 }
 
 func InfofWithContext(ctx context.Context, template string, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.WithLazy("trace", traceID, "span", spanID).Infof(template, args...)
 }
 
-func InfowWithContext(ctx context.Context, msg string, keysAndValues ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
-	keysAndValues = append(keysAndValues, zap.String("trace", traceID), zap.String("span", spanID))
-	_sugar.Infow(msg, keysAndValues...)
+func InfowWithContext(ctx context.Context, msg string, kvs ...interface{}) {
+	traceID, spanID := ExtractTraceInfo(ctx)
+	kvs = append(kvs, zap.String("trace", traceID), zap.String("span", spanID))
+	_sugar.Infow(msg, kvs...)
 }
 
 func DebugWithContext(ctx context.Context, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.With("trace", traceID, "span", spanID).Debug(args...)
 }
 
 func DebugfWithContext(ctx context.Context, template string, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.With("trace", traceID, "span", spanID).Debugf(template, args...)
 }
 
-func DebugwWithContext(ctx context.Context, msg string, keysAndValues ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
-	keysAndValues = append(keysAndValues, zap.String("trace", traceID), zap.String("span", spanID))
-	_sugar.Debugw(msg, keysAndValues...)
+func DebugwWithContext(ctx context.Context, msg string, kvs ...interface{}) {
+	traceID, spanID := ExtractTraceInfo(ctx)
+	kvs = append(kvs, zap.String("trace", traceID), zap.String("span", spanID))
+	_sugar.Debugw(msg, kvs...)
 }
 
 func WarnWithContext(ctx context.Context, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.With("trace", traceID, "span", spanID).Warn(args...)
 }
 
 func WarnfWithContext(ctx context.Context, template string, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.With("trace", traceID, "span", spanID).Warnf(template, args...)
 }
 
-func WarnwWithContext(ctx context.Context, msg string, keysAndValues ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
-	keysAndValues = append(keysAndValues, zap.String("trace", traceID), zap.String("span", spanID))
-	_sugar.Warnw(msg, keysAndValues...)
+func WarnwWithContext(ctx context.Context, msg string, kvs ...interface{}) {
+	traceID, spanID := ExtractTraceInfo(ctx)
+	kvs = append(kvs, zap.String("trace", traceID), zap.String("span", spanID))
+	_sugar.Warnw(msg, kvs...)
 }
 
 func ErrorWithContext(ctx context.Context, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.With("trace", traceID, "span", spanID).Error(args...)
 }
 
 func ErrorfWithContext(ctx context.Context, template string, args ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
+	traceID, spanID := ExtractTraceInfo(ctx)
 	_sugar.With("trace", traceID, "span", spanID).Errorf(template, args...)
 }
 
-func ErrorwWithContext(ctx context.Context, msg string, keysAndValues ...interface{}) {
-	traceID, spanID := extractTrace(ctx)
-	keysAndValues = append(keysAndValues, zap.String("trace", traceID), zap.String("span", spanID))
-	_sugar.Errorw(msg, keysAndValues...)
+func ErrorwWithContext(ctx context.Context, msg string, kvs ...interface{}) {
+	traceID, spanID := ExtractTraceInfo(ctx)
+	kvs = append(kvs, zap.String("trace", traceID), zap.String("span", spanID))
+	_sugar.Errorw(msg, kvs...)
 }
