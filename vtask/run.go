@@ -4,27 +4,28 @@
 // vtask
 package vtask
 
-import "context"
-
-var (
-	defaultTask = NewTask()
-	cancel      context.CancelFunc
-)
-
-func Run() {
-	var ctx context.Context
-	ctx, cancel = context.WithCancel(context.Background())
-	defaultTask.Process(ctx)
-}
-
-func Stop() {
-	cancel()
-}
-
-func Add(param interface{}, tf TaskFunc) {
-	defaultTask.Add(param, tf)
-}
-
-func CanStop() bool {
-	return defaultTask.CanStop()
-}
+//
+//import "context"
+//
+//var (
+//	defaultTask = NewTask()
+//	cancel      context.CancelFunc
+//)
+//
+//func Run() {
+//	var ctx context.Context
+//	ctx, cancel = context.WithCancel(context.Background())
+//	defaultTask.Process(ctx)
+//}
+//
+//func Stop() {
+//	cancel()
+//}
+//
+//func Add(param interface{}, tf TaskFunc) {
+//	defaultTask.Add(param, tf)
+//}
+//
+//func CanStop() bool {
+//	return defaultTask.CanStop()
+//}
