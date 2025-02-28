@@ -5,7 +5,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"github.com/ville-vv/glibs/structs"
+	"glibs/structs"
 	"os"
 	"path"
 	"path/filepath"
